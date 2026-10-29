@@ -1,0 +1,32 @@
+name: Build and push to SWR
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  REGISTRY: swr.af-south-1.myhuaweicloud.com
+  SWR_ORG: test-org
+  IMAGE_NAME: demo
+
+jobs:
+  build-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to SWR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.SWR_USERNAME }}
+          password: ${{ secrets.SWR_PASSWORD }}
+
+      - name: Build and push
+        run: |
+          TAG=${GITHUB_SHA::7}
+          IMAGE=$REGISTRY/$SWR_ORG/$IMAGE_NAME
+          docker build -t $IMAGE:$TAG -t $IMAGE:latest .
+          docker push $IMAGE:$TAG
+          docker push $IMAGE:latest
